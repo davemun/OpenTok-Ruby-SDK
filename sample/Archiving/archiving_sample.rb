@@ -78,6 +78,26 @@ class ArchivingSample < Sinatra::Base
     redirect '/history'
   end
 
+  post '/update/archive' do
+    request.body.rewind
+    request_payload = JSON.parse request.body.read
+    status = request_payload['status']
+    reason = request_payload['reason']
+    archive_id = request_payload['id']
+    session_id = request_payload['sessionId']
+    puts "update body: #{request_payload}"
+
+    if status  == 'stopped' && reason == 'maximum duration exceeded'
+      puts "archiveId: #{archive_id} ended from max duration, starting new archive for sessionId: #{session_id}"
+      begin
+        archive = settings.opentok.archives.create session_id
+      rescue => e
+        puts "Error starting OpenTok Archive #{e}!"
+        puts "failed to start new archive for sessionId: #{session_id}"
+      end
+    end
+  end
+
   # start the server if ruby file executed directly
   run! if app_file == $0
 end
